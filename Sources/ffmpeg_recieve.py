@@ -8,7 +8,7 @@ def writeVideo():
     currentTime = datetime.datetime.now()
     
     #RTSP를 불러오는 곳
-    video_capture = cv2.VideoCapture('rtsp://192.168.25.128:8554/mystream')
+    video_capture = cv2.VideoCapture('rtsp://192.168.0.226:8554/mystream')
     
     # 웹캠 설정
     video_capture.set(3, 800)  # 영상 가로길이 설정
@@ -23,7 +23,7 @@ def writeVideo():
     fileName = str(currentTime.strftime('%Y %m %d %H %M %S'))
 
     #파일 저장하기 위한 변수 선언
-    path = f'C:/Users/mkjsy/Desktop/YM/Source Code/VSCode/GitHub/2024-Graduation-Project/Sources/{fileName}.avi'
+    path = f'C:/Users/mkjsy/Desktop/YM/Source Code/GitHub/2024-Graduation-Project/Sources/{fileName}.avi'
 
     # DIVX 코덱 적용 # 코덱 종류 # DIVX, XVID, MJPG, X264, WMV1, WMV2
     # 무료 라이선스의 이점이 있는 XVID를 사용
