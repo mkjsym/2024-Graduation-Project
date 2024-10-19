@@ -7,6 +7,7 @@ smtp = smtplib.SMTP('smtp.gmail.com', 587)
 smtp.ehlo()
 smtp.starttls()
 
+#sender email, sender's app password
 smtp.login('mkjsym@gmail.com', 'itof hbrd duzh vwjw')
 
 msg = MIMEText('content: test')
