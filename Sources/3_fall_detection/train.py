@@ -1,47 +1,106 @@
-import mediapipe as mp
-import os
-import cv2
 import pandas as pd
-import natsort
+import torch
+import torch.nn as nn
+import random
+import matplotlib.pyplot as plt
 import numpy as np
+import torch.optim as optim
+import os
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
-mp_pose = mp.solutions.pose
-pose = mp_pose.Pose(static_image_mode = True, min_detection_confidence = 0.1, model_complexity = 2)
-mp_drawing = mp.solutions.drawing_utils
 
-def PointExtractor(route):
-        count = 0
-        for r in os.listdir(route):
-            print(count)
-            df = pd.DataFrame()
+# Hyper Parameters
+num_layers = 2
+hidden_size = 50
+num_epochs = 700
+split = 9734 #train test split point 7 : 3
+sequence_length = 30
+batch_size = 32
 
-            tmp_path = os.listdir(route + "/" + r)
-            tmp_path = natsort.natsorted(tmp_path)
-            for i in tmp_path[-90:]:
-                img = cv2.imread(route + "/" + r + "/" + i)
-                rgb_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-                result = pose.process(rgb_img)
-                x = []
-                try:
-                    for k in range(33):
-                        x.append(result.pose_landmarks.landmark[k].x)
-                        x.append(result.pose_landmarks.landmark[k].y)
-                        x.append(result.pose_landmarks.landmark[k].z)
-                        x.append(result.pose_landmarks.landmark[k].visibility)
-                except AttributeError:
-                    x = np.zeros(132)
-                tmp = pd.DataFrame(x).T
-                df = pd.concat([df, tmp])
+df = pd.read_csv(r"/home/youngmin/YM/Github/2024-Graduation-Project/Sources/Data/Action_Labels/skeleton_labels_Coffee_room_01-revised.csv")
+save_path = r'/home/youngmin/YM/Github/2024-Graduation-Project/Sources/Data/Weights/weight.pth'
+#print(df.head())
 
-            df.to_csv('test%d.csv' % count)
-            count += 1
 
-if __name__ == '__main__':
-    for j in range(1,13):
-        num = j
-        path = r"/home/youngmin/disk_b/datasets/HumanPose(Video)/sit/3-%d" % num
-        destination = r"/home/youngmin/YM/My/csv/3-%d" % num
-        if not os.path.exists(destination):
-            os.makedirs(destination)
-        os.chdir(destination)
-        PointExtractor(path)
+def seq_data(x, y, sequence_length):
+    x_seq = []
+    y_seq = []
+    range_list = list(range(0, len(x) - sequence_length))
+    random.shuffle(range_list)
+    for i in range_list:
+        x_seq.append(x[i:i+sequence_length])
+        y_seq.append(y[i+sequence_length])
+
+    return torch.FloatTensor(x_seq).to(device), torch.FloatTensor(y_seq).to(device).view(-1,1)
+
+class GRU(nn.Module):
+    def __init__(self, input_size, hidden_size, sequence_length, num_layers, device):
+        super(GRU, self).__init__()
+        self.device = device
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.gru = nn.GRU(input_size, hidden_size, num_layers, batch_first=True)
+        self.fc = nn.Linear(hidden_size*sequence_length, 1)
+        
+    def forward(self, x):
+        h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(self.device)
+        out, _ = self.gru(x, h0)
+        out = out.reshape(out.shape[0], -1) # <- state 추가
+        out = self.fc(out)
+        return out
+
+
+columns = range(0, 132)
+X_columns = []
+for i in columns:
+    X_columns.append(str(i))
+Y_column = '132'
+X = df[X_columns].values
+Y = df[Y_column].values
+Y = Y.astype(int)
+
+x_seq, y_seq = seq_data(X, Y, sequence_length)
+x_train_seq = x_seq[:split]
+y_train_seq = y_seq[:split]
+x_test_seq = x_seq[split:]
+y_test_seq = y_seq[split:]
+print(x_train_seq.size(), y_train_seq.size())
+print(x_test_seq.size(), y_test_seq.size())
+
+train = torch.utils.data.TensorDataset(x_train_seq, y_train_seq)
+test = torch.utils.data.TensorDataset(x_test_seq, y_test_seq)
+train_loader = torch.utils.data.DataLoader(dataset = train, batch_size = batch_size, shuffle = True)
+test_loader = torch.utils.data.DataLoader(dataset = test, batch_size = batch_size)
+
+input_size = x_seq.size(2)
+
+model = GRU(input_size = input_size, hidden_size = hidden_size, sequence_length = sequence_length, num_layers = num_layers, device = device).to(device)
+#model.load_state_dict(torch.load(f=r'C:/Users/mkjsy/Desktop/YM/Source Code/VSCode/SHM/My/savepoint.pth'))
+criterion = nn.BCEWithLogitsLoss()
+optimizer = optim.Adam(model.parameters(), lr = 1e-3)
+
+loss_graph = []
+n = len(train_loader)
+for epoch in range(num_epochs):
+    running_loss = 0.0
+    
+    for i, data in enumerate(train_loader, 0):
+        seq, target = data
+        out = model(seq)
+        loss = criterion(out, target)
+        
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        running_loss += loss.item()
+    
+    loss_graph.append(running_loss/n)
+    if (epoch + 1) % 100 == 0:
+        print('[epoch: %d] loss: %.4f' %(epoch, running_loss/n))
+
+torch.save(obj=model.state_dict(), f=save_path)
+
+# plt.figure(figsize=(20,10))
+# plt.plot(loss_graph)
+# plt.show() 
