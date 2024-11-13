@@ -20,10 +20,10 @@ def writeVideo():
     streaming_window_height = int(video_capture.get(4))  
     
     #현재 시간을 '년도 달 일 시간 분 초'로 가져와서 문자열로 생성
-    fileName = str(currentTime.strftime('%Y %m %d %H %M %S'))
+    fileName = str(currentTime.strftime('%Y%m%d_%H%M%S'))
 
     #파일 저장하기 위한 변수 선언
-    path = f'C:/Users/mkjsy/Desktop/YM/Source Code/GitHub/2024-Graduation-Project/Sources/{fileName}.avi'
+    path = f'C:/Users/mkjsy/Desktop/YM/Source Code/GitHub/2024-Graduation-Project/Sources/Data/Videos/{fileName}.avi'
 
     # DIVX 코덱 적용 # 코덱 종류 # DIVX, XVID, MJPG, X264, WMV1, WMV2
     # 무료 라이선스의 이점이 있는 XVID를 사용
