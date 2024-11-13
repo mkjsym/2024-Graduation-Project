@@ -4,11 +4,11 @@ import cv2
 import math
 
 #use mp4 video as source
-cap = cv2.VideoCapture('GitHub/2024-Graduation-Project/Sources/Data/fire.mp4')
+cap = cv2.VideoCapture(r'C:/Users/mkjsy/Desktop/YM/Source Code/VSCode/GitHub/2024-Graduation-Project/Sources/Data/fire.mp4')
 #use webcam as source
 # cap = cv2.VideoCapture(0)
 
-model = YOLO('GitHub/2024-Graduation-Project/Sources/Data/fire_model.pt')
+model = YOLO(r'C:/Users/mkjsy/Desktop/YM/Source Code/VSCode/GitHub/2024-Graduation-Project/Sources/Data/fire_model.pt')
 # Reading the classes
 classnames = ['fire']
 

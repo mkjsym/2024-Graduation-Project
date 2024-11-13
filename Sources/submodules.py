@@ -12,6 +12,11 @@ import torch.nn as nn
 import torch
 from time import time
 
+# Hyper Parameters
+senderEmail = 'mkjsym@gmail.com'
+senderPW = 'itof hbrd duzh vwjw'
+receiverEmail = 'mkjsym@gmail.com'
+
 def sendMessage(title, content):
     #use port 587 or 465
     smtp = smtplib.SMTP('smtp.gmail.com', 587)
