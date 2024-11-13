@@ -1,6 +1,5 @@
 import cv2
 import datetime
-import os
 import sys
 
 def writeVideo():
@@ -11,8 +10,8 @@ def writeVideo():
     video_capture = cv2.VideoCapture('rtsp://192.168.0.226:8554/mystream')
     
     # 웹캠 설정
-    video_capture.set(3, 800)  # 영상 가로길이 설정
-    video_capture.set(4, 600)  # 영상 세로길이 설정
+    video_capture.set(3, 1280)  # 영상 가로길이 설정
+    video_capture.set(4, 720)  # 영상 세로길이 설정
     fps = 30
     # 가로 길이 가져오기
     streaming_window_width = int(video_capture.get(3))
