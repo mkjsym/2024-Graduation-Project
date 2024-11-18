@@ -7,7 +7,7 @@ def writeVideo():
     currentTime = datetime.datetime.now()
     
     #RTSP를 불러오는 곳
-    video_capture = cv2.VideoCapture('rtsp://192.168.0.226:8554/mystream')
+    video_capture = cv2.VideoCapture('rtsp://192.168.0.26:8554/mystream')
     
     # 웹캠 설정
     video_capture.set(3, 1280)  # 영상 가로길이 설정
@@ -22,7 +22,7 @@ def writeVideo():
     fileName = str(currentTime.strftime('%Y%m%d_%H%M%S'))
 
     #파일 저장하기 위한 변수 선언
-    path = f'C:/Users/mkjsy/Desktop/YM/Source Code/GitHub/2024-Graduation-Project/Sources/Data/Videos/{fileName}.avi'
+    path = f'C:/Users/mkjsy/Desktop/YM/Source Code/VSCode/GitHub/2024-Graduation-Project/Sources/Data/Videos/{fileName}.avi'
 
     # DIVX 코덱 적용 # 코덱 종류 # DIVX, XVID, MJPG, X264, WMV1, WMV2
     # 무료 라이선스의 이점이 있는 XVID를 사용
@@ -30,7 +30,7 @@ def writeVideo():
     
     # 비디오 저장
     # cv2.VideoWriter(저장 위치, 코덱, 프레임, (가로, 세로))
-    out = cv2.VideoWriter(path, fourcc, fps, (streaming_window_width, streaming_window_height))
+    # out = cv2.VideoWriter(path, fourcc, fps, (streaming_window_width, streaming_window_height))
 
     while True:
         ret, frame = video_capture.read()
@@ -41,7 +41,7 @@ def writeVideo():
         cv2.imshow('streaming video', frame)
         
         # 영상을 저장한다.
-        out.write(frame)
+        # out.write(frame)
         
         # 1ms뒤에 뒤에 코드 실행해준다.
         k = cv2.waitKey(1) & 0xff
@@ -49,7 +49,7 @@ def writeVideo():
         if k == 27:
             break
     video_capture.release()  # cap 객체 해제
-    out.release()  # out 객체 해제
+    # out.release()  # out 객체 해제
     cv2.destroyAllWindows()
 
 if __name__ == "__main__":
