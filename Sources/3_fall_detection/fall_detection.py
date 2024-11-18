@@ -29,14 +29,14 @@ input_size = 132
 num_layers = 2
 hidden_size = 50
 model = GRU(input_size = input_size, hidden_size = hidden_size, sequence_length = sequence_length, num_layers = num_layers, device = device).to(device)
-model.load_state_dict(torch.load(f=r'C:/Users/mkjsy/Desktop/YM/Source Code/GitHub/2024-Graduation-Project/Sources/Data/Weights/weight.pth'))
+model.load_state_dict(torch.load(f=r'C:/Users/mkjsy/Desktop/YM/Source Code/VSCode/GitHub/2024-Graduation-Project/Sources/Data/Weights/weight.pth'))
 
 mp_pose = mp.solutions.pose
 pose = mp_pose.Pose(static_image_mode = True, min_detection_confidence = 0.1, model_complexity = 2)
 mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
 # cap = cv2.VideoCapture(0)
-cap = cv2.VideoCapture(r'C:/Users/mkjsy/Desktop/YM/Source Code/GitHub/2024-Graduation-Project/Sources/Data/video (3).avi')
+cap = cv2.VideoCapture(r'C:/Users/mkjsy/Desktop/YM/Source Code/VSCode/GitHub/2024-Graduation-Project/Sources/Data/video (3).avi')
 
 queue_size = 30
 queue = []
@@ -76,16 +76,16 @@ while cap.isOpened():
         frames_per_second = 1.0 / (time2 - time1)
         
         # Write the calculated number of frames per second on the frame. 
-        cv2.putText(image, 'FPS: {}'.format(int(frames_per_second)), (10, 30),cv2.FONT_HERSHEY_PLAIN, 2, (0, 255, 0), 3)
+        # cv2.putText(image, 'FPS: {}'.format(int(frames_per_second)), (10, 30),cv2.FONT_HERSHEY_PLAIN, 2, (0, 255, 0), 3)
     
     # Update the previous frame time to this frame time.
     # As this frame will become previous frame in next iteration.
     time1 = time2
 
     if (flag == 1):
-        cv2.putText(image, 'Warning!', (10, 65),cv2.FONT_HERSHEY_PLAIN, 2, (0, 255, 0), 3)
+        cv2.putText(image, 'Warning!', (10, 30),cv2.FONT_HERSHEY_PLAIN, 2, (0, 255, 0), 3)
     else:
-        cv2.putText(image, 'Hello World', (10, 65),cv2.FONT_HERSHEY_PLAIN, 2, (0, 255, 0), 3)
+        cv2.putText(image, 'Hello World', (10, 30),cv2.FONT_HERSHEY_PLAIN, 2, (0, 255, 0), 3)
 
     if len(queue) == queue_size:
         input = torch.FloatTensor(queue).to(device)

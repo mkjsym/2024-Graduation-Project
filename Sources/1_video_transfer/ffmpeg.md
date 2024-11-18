@@ -3,7 +3,7 @@ ffmpeg 라이브러리를 통한 영상 송신
     sudo apt-get update
     sudo apt-get install ffmpeg
 2. rtsp 서버 라이브러리 설치
-    mediamtx 깃허브 접속
+    mediamtx 깃허브 접속, arm64v8버전 파일 다운로드
     rtsp 웹서버 엔진 실행 -> ./mediamtx
 3. ffmpeg를 통한 실시간 영상 송신
     ffmpeg -i /dev/video0 -vcodec libx264 -acodec aac -f rtsp rtsp://192.168.25.128:8554/mystream
