@@ -120,7 +120,7 @@ while True:
         frames_per_second = 1.0 / (time2 - time1)
         
         # Write the calculated number of frames per second on the frame. 
-        cv2.putText(frame, 'FPS: {}'.format(int(frames_per_second)), (10, 30),cv2.FONT_HERSHEY_PLAIN, 2, (0, 255, 0), 3)
+        cv2.putText(frame, '{}{}FPS: {}'.format(fire_count, fall_count, int(frames_per_second)), (10, 30),cv2.FONT_HERSHEY_PLAIN, 2, (0, 255, 0), 3)
     
     # Update the previous frame time to this frame time.
     # As this frame will become previous frame in next iteration.
