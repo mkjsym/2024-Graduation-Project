@@ -1,4 +1,10 @@
 from submodules import *
+import cProfile, pstats
+
+profile_filename = "profile_results.txt"
+
+profiler = cProfile.Profile()
+profiler.enable()
 
 # 사전학습된 Yolo 모델 호출
 fire_model = YOLO(r'C:/Users/mkjsy/Desktop/YM/Source Code/VSCode/GitHub/2024-Graduation-Project/Sources/Data/fire_model.pt')
@@ -10,8 +16,8 @@ video_capture = cv2.VideoCapture(0)
 # video_capture = cv2.VideoCapture('video_path')
 # video_capture = cv2.VideoCapture('rtsp://192.168.0.226:8554/mystream')
 # 웹캠 설정
-video_capture.set(3, 640)  # 영상 가로길이 설정
-video_capture.set(4, 480)  # 영상 세로길이 설정
+video_capture.set(3, 1280)  # 영상 가로길이 설정
+video_capture.set(4, 720)  # 영상 세로길이 설정
 fps = 30
 streaming_window_width = int(video_capture.get(3))
 streaming_window_height = int(video_capture.get(4))  
@@ -26,7 +32,7 @@ path = f'C:/Users/mkjsy/Desktop/YM/Source Code/VSCode/GitHub/2024-Graduation-Pro
 fourcc = cv2.VideoWriter_fourcc('X', 'V', 'I', 'D')
 # 비디오 저장
 # cv2.VideoWriter(저장 위치, 코덱, 프레임, (가로, 세로))
-out = cv2.VideoWriter(path, fourcc, fps, (streaming_window_width, streaming_window_height))
+# out = cv2.VideoWriter(path, fourcc, fps, (streaming_window_width, streaming_window_height))
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 sequence_length = 30
@@ -51,6 +57,8 @@ fire_count = 0
 fall_count = 0
 count_threshold = 20
 
+before = []
+
 
 while True:
     success, frame = video_capture.read()
@@ -65,6 +73,11 @@ while True:
     pose_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     pose_result = pose.process(pose_frame)
 
+    if (fire_count < 0):
+        fire_count = 0
+    if (fall_count < 0):
+        fall_count = 0
+
     # Getting bbox,confidence and class names information to work with
     for info in fire_result:
         boxes = info.boxes
@@ -72,13 +85,15 @@ while True:
             confidence = box.conf[0]
             confidence = math.ceil(confidence * 100)
             Class = int(box.cls[0])
-            if confidence > 65:
+            if confidence > 60:
                 x1, y1, x2, y2 = box.xyxy[0]
                 x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
                 cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 5)
                 cvzone.putTextRect(frame, f'{classnames[Class]} {confidence}%', [x1 + 8, y1 + 100],
                                    scale=1.5, thickness=2)
                 fire_count += 1
+            else:
+                fire_count -= 2
                 
     x = []
     try:
@@ -87,8 +102,12 @@ while True:
             x.append(pose_result.pose_landmarks.landmark[k].y)
             x.append(pose_result.pose_landmarks.landmark[k].z)
             x.append(pose_result.pose_landmarks.landmark[k].visibility)
+        before = x
     except AttributeError:
-        x = np.zeros(132)
+        if (before):
+            x = before
+        else:
+            x = np.zeros(132)
     queue.append(x)
     
     # Set the time for this frame to the current time.
@@ -116,6 +135,7 @@ while True:
             fall_count += 1
         else:
             flag = 0
+            fall_count -= 2
         print(output, flag)
         queue.pop(0)
 
@@ -139,7 +159,7 @@ while True:
         sendMessage('Warning! Fall Detected', f'Warning. Fall Detected. {timeText}')
     
     # 영상을 저장한다.
-    out.write(frame)
+    # out.write(frame)
     
     # 1ms뒤에 뒤에 코드 실행해준다.
     k = cv2.waitKey(1) & 0xff
@@ -148,5 +168,12 @@ while True:
         break
 
 video_capture.release()  # cap 객체 해제
-out.release()  # out 객체 해제
+# out.release()  # out 객체 해제
 cv2.destroyAllWindows()
+
+profiler.disable()
+
+with open(profile_filename, "w") as f:
+    stats = pstats.Stats(profiler, stream=f)
+    stats.sort_stats("cumulative")  # 누적 시간 순으로 정렬
+    stats.print_stats()
