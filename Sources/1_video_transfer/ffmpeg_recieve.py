@@ -7,7 +7,7 @@ def writeVideo():
     currentTime = datetime.datetime.now()
     
     #RTSP를 불러오는 곳
-    video_capture = cv2.VideoCapture('rtsp://192.168.0.26:8554/mystream')
+    video_capture = cv2.VideoCapture('rtsp://58.142.226.112:8554/mystream')
     
     # 웹캠 설정
     video_capture.set(3, 1280)  # 영상 가로길이 설정
