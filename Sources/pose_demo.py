@@ -1,26 +1,16 @@
 from submodules import *
-import cProfile, pstats
-
-profile_filename = "profile_results.txt"
-
-profiler = cProfile.Profile()
-profiler.enable()
-
-# 사전학습된 Yolo 모델 호출
-fire_model = YOLO(r'C:/Users/mkjsy/Desktop/YM/Source Code/VSCode/GitHub/2024-Graduation-Project/Sources/Data/fire_model.pt')
-classnames = ['fire']
 
 # Hyper Parameters
 currentTime = datetime.datetime.now()
 video_capture = cv2.VideoCapture(0)
-# video_capture = cv2.VideoCapture('video_path')
+#video_capture = cv2.VideoCapture(r'C:/Users/mkjsy/Desktop/YM/Source Code/VSCode/GitHub/2024-Graduation-Project/Sources/Data/video (3).avi')
 # video_capture = cv2.VideoCapture('rtsp://192.168.0.226:8554/mystream')
 # 웹캠 설정
 video_capture.set(3, 1280)  # 영상 가로길이 설정
 video_capture.set(4, 720)  # 영상 세로길이 설정
 fps = 30
 streaming_window_width = int(video_capture.get(3))
-streaming_window_height = int(video_capture.get(4))  
+streaming_window_height = int(video_capture.get(4))
 
 #현재 시간을 '년도 달 일 시간 분 초'로 가져와서 문자열로 생성
 fileName = str(currentTime.strftime('%Y%m%d_%H%M%S'))
@@ -53,9 +43,8 @@ flag = 0
 
 # Initialize a variable to store the time of the previous frame.
 time1 = 0
-fire_count = 0
 fall_count = 0
-count_threshold = 20
+count_threshold = 14
 
 before = []
 
@@ -67,41 +56,25 @@ while True:
         print('failed to read video')
         continue
 
-    fire_frame = cv2.resize(frame, (640, 480))
-    fire_result = fire_model(frame, stream = True)
+    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    result = pose.process(frame)
+    frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+    mp_drawing.draw_landmarks(
+            frame,
+            result.pose_landmarks,
+            mp_pose.POSE_CONNECTIONS,
+            landmark_drawing_spec=mp_drawing_styles.get_default_pose_landmarks_style())
 
-    pose_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    pose_result = pose.process(pose_frame)
-
-    if (fire_count < 0):
-        fire_count = 0
     if (fall_count < 0):
         fall_count = 0
-
-    # Getting bbox,confidence and class names information to work with
-    for info in fire_result:
-        boxes = info.boxes
-        for box in boxes:
-            confidence = box.conf[0]
-            confidence = math.ceil(confidence * 100)
-            Class = int(box.cls[0])
-            if confidence > 60:
-                x1, y1, x2, y2 = box.xyxy[0]
-                x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
-                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 5)
-                cvzone.putTextRect(frame, f'{classnames[Class]} {confidence}%', [x1 + 8, y1 + 100],
-                                   scale=1.5, thickness=2)
-                fire_count += 1
-            else:
-                fire_count -= 2
                 
     x = []
     try:
         for k in range(33):
-            x.append(pose_result.pose_landmarks.landmark[k].x)
-            x.append(pose_result.pose_landmarks.landmark[k].y)
-            x.append(pose_result.pose_landmarks.landmark[k].z)
-            x.append(pose_result.pose_landmarks.landmark[k].visibility)
+            x.append(result.pose_landmarks.landmark[k].x)
+            x.append(result.pose_landmarks.landmark[k].y)
+            x.append(result.pose_landmarks.landmark[k].z)
+            x.append(result.pose_landmarks.landmark[k].visibility)
         before = x
     except AttributeError:
         if (before):
@@ -120,7 +93,7 @@ while True:
         frames_per_second = 1.0 / (time2 - time1)
         
         # Write the calculated number of frames per second on the frame. 
-        cv2.putText(frame, '{}{}FPS: {}'.format(fire_count, fall_count, int(frames_per_second)), (10, 30),cv2.FONT_HERSHEY_PLAIN, 2, (0, 255, 0), 3)
+        cv2.putText(frame, '{}FPS: {}'.format(fall_count, int(frames_per_second)), (10, 30),cv2.FONT_HERSHEY_PLAIN, 2, (0, 255, 0), 3)
     
     # Update the previous frame time to this frame time.
     # As this frame will become previous frame in next iteration.
@@ -135,7 +108,7 @@ while True:
             fall_count += 1
         else:
             flag = 0
-            fall_count -= 2
+            fall_count -= 1
         print(output, flag)
         queue.pop(0)
 
@@ -145,12 +118,6 @@ while True:
         cv2.putText(frame, 'Hello World', (10, 65),cv2.FONT_HERSHEY_PLAIN, 2, (0, 255, 0), 3)
 
     cv2.imshow('streaming video', frame)
-
-    if (fire_count >= count_threshold):
-        fire_count = 0
-        curTime = datetime.datetime.now()
-        timeText = str(curTime.strftime('%Y%m%d_%H%M%S'))
-        sendMessage('Warning! Fire Detected', f'Warning. Fire Detected. {timeText}')
     
     if (fall_count >= count_threshold):
         fall_count = 0
@@ -170,10 +137,3 @@ while True:
 video_capture.release()  # cap 객체 해제
 # out.release()  # out 객체 해제
 cv2.destroyAllWindows()
-
-profiler.disable()
-
-with open(profile_filename, "w") as f:
-    stats = pstats.Stats(profiler, stream=f)
-    stats.sort_stats("cumulative")  # 누적 시간 순으로 정렬
-    stats.print_stats()
